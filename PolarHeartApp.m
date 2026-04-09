@@ -1,5 +1,4 @@
 classdef PolarHeartApp < matlab.apps.AppBase
-
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure        matlab.ui.Figure
@@ -25,10 +24,9 @@ classdef PolarHeartApp < matlab.apps.AppBase
             app.CurrentThetaIdx = 1;
             
             % Initialize plot
-            app.UIAxes.XLim = [-2 2];
-            app.UIAxes.YLim = [-2 2];
+            app.UIAxes.XLim = [-4 4];
+            app.UIAxes.YLim = [-4 4];
             app.UIAxes.DataAspectRatio = [1 1 1]; % Keep aspect ratio square
-            app.UIAxes.Visible = 'off'; % Hide axes for cleaner look
             hold(app.UIAxes, 'on');
             app.PlotHandle = plot(app.UIAxes, NaN, NaN, 'r-', 'LineWidth', 2); % Initialize with NaN
             hold(app.UIAxes, 'off');
@@ -36,14 +34,17 @@ classdef PolarHeartApp < matlab.apps.AppBase
             % Create and start timer for animation
             app.AnimationTimer = timer('ExecutionMode', 'fixedRate', ...
                                        'Period', 0.01, ... % Adjust speed here
-                                       'TimerFcn', @(src, event) app.animatePlot);
+                                       'TimerFcn', @(~, ~) app.animatePlot());
             start(app.AnimationTimer);
         end
 
         % Value changed function: ASlider
-        function ASliderValueChanged(app, event)
+        % 使用 varargin 接收所有可能的参数，彻底避免“输入参数太多”报错
+        function ASliderValueChanged(app, varargin)
             % Stop current animation, reset, and restart
-            stop(app.AnimationTimer);
+            if isvalid(app.AnimationTimer)
+                stop(app.AnimationTimer);
+            end
             app.CurrentThetaIdx = 1;
             set(app.PlotHandle, 'XData', NaN, 'YData', NaN); % Clear plot
             start(app.AnimationTimer);
@@ -51,10 +52,18 @@ classdef PolarHeartApp < matlab.apps.AppBase
         
         % Timer callback function for animation
         function animatePlot(app)
+            if ~isvalid(app.UIFigure)
+                if isvalid(app.AnimationTimer)
+                    stop(app.AnimationTimer);
+                end
+                return;
+            end
+            
             a = app.ASlider.Value;
+            idx = app.CurrentThetaIdx;
             
             % Calculate r for the current theta range
-            currentThetaRange = app.Theta(1:app.CurrentThetaIdx);
+            currentThetaRange = app.Theta(1:idx);
             r = a * (1 - sin(currentThetaRange));
             
             % Convert polar to Cartesian coordinates
@@ -65,15 +74,14 @@ classdef PolarHeartApp < matlab.apps.AppBase
             set(app.PlotHandle, 'XData', x, 'YData', y);
             
             % Advance index
-            app.CurrentThetaIdx = app.CurrentThetaIdx + 1;
+            app.CurrentThetaIdx = idx + 1;
             if app.CurrentThetaIdx > length(app.Theta)
                 stop(app.AnimationTimer); % Stop when done
-                app.CurrentThetaIdx = 1; % Reset for next change
             end
         end
 
         % Close request function: UIFigure
-        function UIFigureCloseRequest(app, event)
+        function UIFigureCloseRequest(app, varargin)
             % Stop timer before closing app
             if isvalid(app.AnimationTimer)
                 stop(app.AnimationTimer);
@@ -112,6 +120,7 @@ classdef PolarHeartApp < matlab.apps.AppBase
             app.ASlider = uislider(app.UIFigure);
             app.ASlider.Limits = [0.1 2];
             app.ASlider.Value = 1;
+            % 关键修复：使用匿名函数包装回调，规避参数传递问题
             app.ASlider.ValueChangedFcn = createCallbackFcn(app, @app.ASliderValueChanged, true);
             app.ASlider.Position = [140 54 300 3];
 
