@@ -118,8 +118,8 @@ classdef PolarHeartApp < matlab.apps.AppBase
 
             % Create ASlider
             app.ASlider = uislider(app.UIFigure);
-            app.ASlider.Limits = [0.1 2];
-            app.ASlider.Value = 1;
+            app.ASlider.Limits = [0.1 100];
+            app.ASlider.Value = 77;
             % 关键修复：使用匿名函数包装回调，规避参数传递问题
             app.ASlider.ValueChangedFcn = createCallbackFcn(app, @app.ASliderValueChanged, true);
             app.ASlider.Position = [140 54 300 3];
