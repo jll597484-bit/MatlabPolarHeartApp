@@ -24,8 +24,8 @@ classdef PolarHeartApp < matlab.apps.AppBase
             app.CurrentThetaIdx = 1;
             
             % Initialize plot
-            app.UIAxes.XLim = [-4 4];
-            app.UIAxes.YLim = [-4 4];
+            app.UIAxes.XLim = [-200 200];
+            app.UIAxes.YLim = [-200 200];
             app.UIAxes.DataAspectRatio = [1 1 1]; % Keep aspect ratio square
             hold(app.UIAxes, 'on');
             app.PlotHandle = plot(app.UIAxes, NaN, NaN, 'r-', 'LineWidth', 2); % Initialize with NaN
